@@ -1,75 +1,93 @@
-# OpenClaw Browser Relay (Resilient Fork)
+# Artífice Connect — Chrome Extension
 
-A hardened version of the [OpenClaw](https://github.com/openclaw/openclaw) Browser Relay extension that survives WebSocket disconnects, MV3 service worker restarts, and tab lifecycle events.
+Browser relay extension for [Artífice](https://artificeia.mx) — AI-driven browser automation for Mexican businesses.
 
-> **Upstream PR:** [openclaw/openclaw#17588](https://github.com/openclaw/openclaw/pull/17588)
-> If/when the PR is merged, this repo may be archived.
+Clients chat on WhatsApp, the AI agent controls their browser on legacy portals (SAT, IMSS, insurance companies, etc.) that lack APIs.
 
-## Why This Fork?
+> **Based on** the resilient [OpenClaw Browser Relay](https://github.com/Unayung/openclaw-browser-relay) fork by [@Unayung](https://github.com/Unayung), which is itself based on the Browser Relay from [OpenClaw](https://github.com/openclaw/openclaw) by Peter Steinberger.
 
-The stock Browser Relay extension has several failure modes that require manual re-attachment:
+## How It Works
 
-| Problem | Stock | This Fork |
-|---------|-------|-----------|
-| Gateway restart / WS drop | ❌ Debugger detached, extension goes dead | ✅ Keeps debugger, auto-reconnects |
-| MV3 service worker killed | ❌ All state lost, appears attached but dead | ✅ State persisted & restored |
-| Tab closed/replaced | ❌ Stale entries left in memory | ✅ Proper cleanup listeners |
-| Worker idle timeout (~30s) | ❌ Worker terminated, sessions killed | ✅ Keepalive alarm every 4 min |
+1. Install this extension
+2. Install the [Artífice Connect](https://github.com/bazfer/artifice-client) desktop app
+3. Log into your portal (SAT, insurance, etc.)
+4. Click the extension icon on the tab you want to share → badge turns **ON**
+5. Chat on WhatsApp — the AI agent can now help you fill forms, submit data, pull information
 
-## What's Changed
+The agent **never sees your password** — you log in yourself. The agent only operates on already-authenticated sessions.
 
-### Fix 1: Don't detach debugger on WS drop
-Keep debugger sessions alive when the relay WebSocket closes. Show ⏳ badge while reconnecting. Re-announce sessions when WS recovers.
+## Architecture
 
-### Fix 2: Auto-reconnect with exponential backoff
-Retries connection with backoff (1s → 2s → 4s → ... → 30s cap) + jitter. On reconnect, verifies each tab's debugger and re-announces to the relay.
+```
+Chrome (your portal) ←CDP→ Extension ←localhost→ Artífice App ←WSS→ Gateway
+```
 
-### Fix 3: Persist state to `chrome.storage.session`
-Saves tab/session state so MV3 service worker restarts can recover without user intervention.
+- **This extension** handles Chrome DevTools Protocol (CDP) access to shared tabs
+- **Artífice Connect app** handles secure connection to the Artífice gateway
+- **Gateway** routes WhatsApp messages to your browser session
 
-### Fix 4: Tab lifecycle cleanup
-Listeners for `chrome.tabs.onRemoved` and `chrome.tabs.onReplaced` to clean up stale entries.
+## Features (inherited from upstream)
 
-### Fix 5: Keepalive via `chrome.alarms`
-A `relay-keepalive` alarm (every 4 min) that keeps the worker alive, pings debugger sessions, and triggers state recovery if needed.
+| Feature | Description |
+|---------|-------------|
+| Auto-reconnect | Exponential backoff with jitter on connection drop |
+| State persistence | Survives Chrome service worker restarts (MV3) |
+| Tab lifecycle | Proper cleanup when tabs are closed/replaced |
+| Keepalive | Alarm-based worker keepalive (every 4 min) |
+| Race-safe | WS handlers installed before connect resolves |
 
-### Fix 6: Race window fix
-Permanent WS `onclose`/`onerror` handlers are installed inside `onopen` (before the connect promise resolves) to eliminate the race window where a WS drop could go unnoticed.
+## Install
 
-## Install (Sideload)
+### From Chrome Web Store (coming soon)
+Search for "Artífice Connect" in the Chrome Web Store.
 
-1. Download or clone this repo
-2. Open Chrome/Edge → `chrome://extensions` (or `edge://extensions`)
+### Sideload (development)
+1. Clone this repo
+2. Open Chrome → `chrome://extensions`
 3. Enable **Developer mode**
 4. Click **Load unpacked** → select this folder
-5. Pin the extension icon in the toolbar
+5. Pin the extension icon
 
 ## Configure
 
 1. Click the extension icon → **Options**
 2. Set the **Port** (default: `18792`)
-3. Enter your **Gateway token** (from `openclaw.json` → `gateway.auth.token`)
+3. Enter your **client token** (provided during pairing in the Artífice app)
 4. Click **Save**
 
-## Usage
+## Security
 
-1. Start OpenClaw Gateway (`openclaw gateway start`)
-2. Navigate to any page you want to automate
-3. Click the extension toolbar icon — badge turns **ON**
-4. OpenClaw can now control that tab via the `browser` tool
+- **Tab isolation:** Only tabs you explicitly share are visible to the agent
+- **No passwords:** Agent operates post-login only
+- **TLS:** All traffic encrypted via WSS
+- **Per-client tokens:** Your connection is authenticated and revocable
+- **Audit log:** Every agent action is logged
 
-## Tested With
+## Development
 
-- Edge (Chromium) on Linux
-- 12+ hours continuous uptime with automated cron jobs (Suno music pipeline)
-- Multiple gateway restarts — auto-reconnect worked every time
-- Edge Sleeping Tabs — keepalive prevented worker termination
+```bash
+git clone https://github.com/bazfer/artifice-connect-extension.git
+cd artifice-connect-extension
+# Load unpacked in chrome://extensions
+```
+
+### Key files
+- `manifest.json` — Extension manifest (Manifest V3)
+- `background.js` — Service worker: WebSocket client, CDP relay, state management
+- `options.html/js` — Configuration page (port, token)
+
+## Related
+
+- [Artífice Connect App](https://github.com/bazfer/artifice-client) — Desktop connection manager (Tauri)
+- [Artífice Architecture](https://github.com/bazfer/mind-vault/blob/main/shared/projects/artifice/artifice-client-architecture.md) — Full system design
+- [OpenClaw](https://github.com/openclaw/openclaw) — AI agent framework
 
 ## License
 
-MIT — same as [OpenClaw](https://github.com/openclaw/openclaw/blob/main/LICENSE).
+MIT — see [LICENSE](LICENSE).
 
 ## Credits
 
-Based on the Browser Relay extension from [OpenClaw](https://github.com/openclaw/openclaw) by Peter Steinberger.
-Resilience patches by [@Unayung](https://github.com/Unayung).
+- Original Browser Relay: [OpenClaw](https://github.com/openclaw/openclaw) by Peter Steinberger
+- Resilience patches: [@Unayung](https://github.com/Unayung)
+- Artífice adaptation: [@bazfer](https://github.com/bazfer)
