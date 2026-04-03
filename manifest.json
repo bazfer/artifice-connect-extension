@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "OpenClaw Browser Relay",
+  "name": "Artífice Connect",
   "version": "0.1.0",
-  "description": "Attach OpenClaw to your existing Chrome tab via a local CDP relay server.",
+  "description": "Connect your browser to Artífice — AI-driven automation for legacy web portals.",
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",
@@ -13,7 +13,7 @@
   "host_permissions": ["http://127.0.0.1/*", "http://localhost/*"],
   "background": { "service_worker": "background.js" },
   "action": {
-    "default_title": "OpenClaw Browser Relay (click to attach/detach)",
+    "default_title": "Artífice Connect (click to share/unshare tab)",
     "default_icon": {
       "16": "icons/icon16.png",
       "32": "icons/icon32.png",
