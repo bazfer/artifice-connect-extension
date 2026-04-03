@@ -1,4 +1,4 @@
-const DEFAULT_PORT = 18792
+const DEFAULT_RELAY_URL = 'wss://relay.artificeia.mx'
 
 const BADGE = {
   on: { text: 'ON', color: '#FF5A36' },
@@ -38,12 +38,11 @@ function nowStack() {
   }
 }
 
-async function getRelayPort() {
-  const stored = await chrome.storage.local.get(['relayPort'])
-  const raw = stored.relayPort
-  const n = Number.parseInt(String(raw || ''), 10)
-  if (!Number.isFinite(n) || n <= 0 || n > 65535) return DEFAULT_PORT
-  return n
+async function getRelayUrl() {
+  const stored = await chrome.storage.local.get(['relayUrl'])
+  const raw = String(stored.relayUrl || '').trim()
+  if (!raw) return DEFAULT_RELAY_URL
+  return raw
 }
 
 async function getGatewayToken() {
@@ -64,25 +63,19 @@ async function ensureRelayConnection() {
   if (relayConnectPromise) return await relayConnectPromise
 
   relayConnectPromise = (async () => {
-    const port = await getRelayPort()
+    const relayUrl = await getRelayUrl()
     const gatewayToken = await getGatewayToken()
-    const httpBase = `http://127.0.0.1:${port}`
-    const wsUrl = gatewayToken
-      ? `ws://127.0.0.1:${port}/extension?token=${encodeURIComponent(gatewayToken)}`
-      : `ws://127.0.0.1:${port}/extension`
-
-    // Fast preflight: is the relay server up?
-    try {
-      await fetch(`${httpBase}/`, { method: 'HEAD', signal: AbortSignal.timeout(2000) })
-    } catch (err) {
-      throw new Error(`Relay server not reachable at ${httpBase} (${String(err)})`)
-    }
 
     if (!gatewayToken) {
       throw new Error(
         'Missing gatewayToken in extension settings (chrome.storage.local.gatewayToken)',
       )
     }
+
+    // Build WebSocket URL with token as query param
+    // (Browser WebSocket API does not support custom headers)
+    const separator = relayUrl.includes('?') ? '&' : '?'
+    const wsUrl = `${relayUrl}${separator}token=${encodeURIComponent(gatewayToken)}`
 
     const ws = new WebSocket(wsUrl)
     relayWs = ws

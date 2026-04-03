@@ -177,9 +177,9 @@
 
         <div class="card">
           <h2>Connection</h2>
-          <label for="port">Port</label>
+          <label for="relay-url-input">Relay URL</label>
           <div class="row">
-            <input id="port" inputmode="numeric" pattern="[0-9]*" />
+            <input id="relay-url-input" type="url" placeholder="wss://relay.artificeia.mx" style="width: min(520px, 100%)" />
           </div>
           <label for="token" style="margin-top: 10px">Client token</label>
           <div class="row">
@@ -187,7 +187,7 @@
             <button id="save" type="button">Save</button>
           </div>
           <div class="hint">
-            Default port: <code>18792</code>. Connects to: <code id="relay-url">http://127.0.0.1:&lt;port&gt;/</code>.
+            Default relay: <code>wss://relay.artificeia.mx</code>.
             Your client token is provided during pairing in the Artífice Connect app.
           </div>
           <div class="status" id="status"></div>
