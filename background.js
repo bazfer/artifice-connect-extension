@@ -146,7 +146,7 @@ function onRelayClosed(reason) {
       setBadge(tabId, 'connecting')
       void chrome.action.setTitle({
         tabId,
-        title: 'OpenClaw Browser Relay: reconnecting…',
+        title: 'Artífice Connect: reconnecting…',
       })
     }
   }
@@ -161,12 +161,12 @@ function scheduleReconnect() {
   if (reconnectTimer) return // already scheduled
   const delay = Math.min(1000 * Math.pow(2, reconnectAttempt), 30000) + Math.random() * 500
   reconnectAttempt++
-  console.log(`[OpenClaw Relay] Scheduling reconnect attempt ${reconnectAttempt} in ${Math.round(delay)}ms`)
+  console.log(`[Artífice Relay] Scheduling reconnect attempt ${reconnectAttempt} in ${Math.round(delay)}ms`)
 
   reconnectTimer = setTimeout(async () => {
     try {
       await ensureRelayConnection()
-      console.log('[OpenClaw Relay] Reconnected successfully')
+      console.log('[Artífice Relay] Reconnected successfully')
 
       // Re-announce all still-attached tabs
       for (const [tabId, tab] of tabs.entries()) {
@@ -205,17 +205,17 @@ function scheduleReconnect() {
             setBadge(tabId, 'on')
             void chrome.action.setTitle({
               tabId,
-              title: 'OpenClaw Browser Relay: attached (click to detach)',
+              title: 'Artífice Connect: attached (click to detach)',
             })
-            console.log(`[OpenClaw Relay] Re-announced tab ${tabId} (session: ${tab.sessionId})`)
+            console.log(`[Artífice Relay] Re-announced tab ${tabId} (session: ${tab.sessionId})`)
           } catch (err) {
-            console.warn(`[OpenClaw Relay] Failed to re-announce tab ${tabId}:`, err)
+            console.warn(`[Artífice Relay] Failed to re-announce tab ${tabId}:`, err)
             cleanupTab(tabId)
           }
         }
       }
     } catch (err) {
-      console.log(`[OpenClaw Relay] Reconnect failed: ${err instanceof Error ? err.message : err}`)
+      console.log(`[Artífice Relay] Reconnect failed: ${err instanceof Error ? err.message : err}`)
       reconnectTimer = null
       scheduleReconnect()
       return
@@ -258,14 +258,14 @@ async function restoreState() {
           returnByValue: true,
         })
       } catch {
-        console.log(`[OpenClaw Relay] Tab ${tabId} debugger lost — attempting re-attach`)
+        console.log(`[Artífice Relay] Tab ${tabId} debugger lost — attempting re-attach`)
         try {
           await chrome.debugger.attach({ tabId }, '1.3')
           await chrome.debugger.sendCommand({ tabId }, 'Runtime.enable')
           await chrome.debugger.sendCommand({ tabId }, 'Network.enable')
-          console.log(`[OpenClaw Relay] Tab ${tabId} re-attached successfully`)
+          console.log(`[Artífice Relay] Tab ${tabId} re-attached successfully`)
         } catch (reattachErr) {
-          console.warn(`[OpenClaw Relay] Tab ${tabId} re-attach failed:`, reattachErr)
+          console.warn(`[Artífice Relay] Tab ${tabId} re-attach failed:`, reattachErr)
           setBadge(tabId, 'off')
           continue
         }
@@ -278,7 +278,7 @@ async function restoreState() {
     }
 
     if (restored > 0) {
-      console.log(`[OpenClaw Relay] Restored ${restored} tab(s) from session storage`)
+      console.log(`[Artífice Relay] Restored ${restored} tab(s) from session storage`)
 
       if (!debuggerListenersInstalled) {
         debuggerListenersInstalled = true
@@ -306,7 +306,7 @@ async function restoreState() {
                 },
               })
             } catch (err) {
-              console.warn(`[OpenClaw Relay] restoreState: failed to re-announce tab ${tabId}:`, err)
+              console.warn(`[Artífice Relay] restoreState: failed to re-announce tab ${tabId}:`, err)
               cleanupTab(tabId)
             }
           }
@@ -317,7 +317,7 @@ async function restoreState() {
       return true
     }
   } catch (err) {
-    console.warn('[OpenClaw Relay] Failed to restore state:', err)
+    console.warn('[Artífice Relay] Failed to restore state:', err)
   }
   return false
 }
@@ -436,7 +436,7 @@ async function attachTab(tabId, opts = {}) {
   tabBySession.set(sessionId, tabId)
   void chrome.action.setTitle({
     tabId,
-    title: 'OpenClaw Browser Relay: attached (click to detach)',
+    title: 'Artífice Connect: attached (click to detach)',
   })
 
   if (!opts.skipAttachedEvent) {
@@ -493,7 +493,7 @@ async function detachTab(tabId, reason) {
   setBadge(tabId, 'off')
   void chrome.action.setTitle({
     tabId,
-    title: 'OpenClaw Browser Relay (click to attach/detach)',
+    title: 'Artífice Connect (click to attach/detach)',
   })
 
   // ===== FIX #3: Persist state after detach =====
@@ -515,7 +515,7 @@ async function connectOrToggleForActiveTab() {
   setBadge(tabId, 'connecting')
   void chrome.action.setTitle({
     tabId,
-    title: 'OpenClaw Browser Relay: connecting to local relay…',
+    title: 'Artífice Connect: connecting to local relay…',
   })
 
   try {
@@ -526,7 +526,7 @@ async function connectOrToggleForActiveTab() {
     setBadge(tabId, 'error')
     void chrome.action.setTitle({
       tabId,
-      title: 'OpenClaw Browser Relay: relay not running (open options for setup)',
+      title: 'Artífice Connect: relay not running (open options for setup)',
     })
     void maybeOpenHelpOnce()
     const message = err instanceof Error ? err.message : String(err)
@@ -647,7 +647,7 @@ function onDebuggerDetach(source, reason) {
   if (reason === 'target_closed') {
     const tab = tabs.get(tabId)
     if (tab?.state === 'connected') {
-      console.log(`[OpenClaw Relay] Tab ${tabId} detached (navigation) — will re-attach`)
+      console.log(`[Artífice Relay] Tab ${tabId} detached (navigation) — will re-attach`)
       tab.state = 'pending_reattach'
       setBadge(tabId, 'connecting')
       // Wait for navigation to settle, then re-attach
@@ -665,7 +665,7 @@ async function reattachAfterNavigation(tabId) {
 
   const chromeTab = await chrome.tabs.get(tabId).catch(() => null)
   if (!chromeTab) {
-    console.log(`[OpenClaw Relay] Tab ${tabId} gone after navigation — cleaning up`)
+    console.log(`[Artífice Relay] Tab ${tabId} gone after navigation — cleaning up`)
     cleanupTab(tabId)
     return
   }
@@ -704,31 +704,31 @@ async function reattachAfterNavigation(tabId) {
       setBadge(tabId, 'on')
       void chrome.action.setTitle({
         tabId,
-        title: 'OpenClaw Browser Relay: attached (click to detach)',
+        title: 'Artífice Connect: attached (click to detach)',
       })
       void persistState()
-      console.log(`[OpenClaw Relay] Tab ${tabId} re-attached after navigation (attempt ${attempt + 1})`)
+      console.log(`[Artífice Relay] Tab ${tabId} re-attached after navigation (attempt ${attempt + 1})`)
       return
     } catch (err) {
-      console.log(`[OpenClaw Relay] Tab ${tabId} re-attach attempt ${attempt + 1} failed: ${err}`)
+      console.log(`[Artífice Relay] Tab ${tabId} re-attach attempt ${attempt + 1} failed: ${err}`)
       if (attempt < 2) await new Promise((r) => setTimeout(r, 1000))
     }
   }
 
-  console.warn(`[OpenClaw Relay] Tab ${tabId} re-attach failed after 3 attempts — giving up`)
+  console.warn(`[Artífice Relay] Tab ${tabId} re-attach failed after 3 attempts — giving up`)
   cleanupTab(tabId)
 }
 
 // ===== FIX #4: Tab lifecycle cleanup =====
 chrome.tabs.onRemoved.addListener((tabId) => {
   if (!tabs.has(tabId)) return
-  console.log(`[OpenClaw Relay] Tab ${tabId} closed — cleaning up`)
+  console.log(`[Artífice Relay] Tab ${tabId} closed — cleaning up`)
   void detachTab(tabId, 'tab_closed')
 })
 
 chrome.tabs.onReplaced.addListener((addedTabId, removedTabId) => {
   if (!tabs.has(removedTabId)) return
-  console.log(`[OpenClaw Relay] Tab ${removedTabId} replaced by ${addedTabId} — cleaning up`)
+  console.log(`[Artífice Relay] Tab ${removedTabId} replaced by ${addedTabId} — cleaning up`)
   void detachTab(removedTabId, 'tab_replaced')
 })
 
@@ -744,7 +744,7 @@ chrome.alarms.create('relay-keepalive', { periodInMinutes: 4 })
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name !== 'relay-keepalive') return
   if (tabs.size === 0) return
-  console.log(`[OpenClaw Relay] Keepalive ping — ${tabs.size} tab(s) attached`)
+  console.log(`[Artífice Relay] Keepalive ping — ${tabs.size} tab(s) attached`)
 
   for (const [tabId, tab] of tabs.entries()) {
     if (tab.state !== 'connected') continue
@@ -754,7 +754,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
         returnByValue: true,
       })
     } catch {
-      console.warn(`[OpenClaw Relay] Keepalive: tab ${tabId} debugger lost — cleaning up`)
+      console.warn(`[Artífice Relay] Keepalive: tab ${tabId} debugger lost — cleaning up`)
       cleanupTab(tabId)
     }
   }
@@ -763,6 +763,6 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 // ===== FIX #3: Restore state on service worker startup =====
 void restoreState().then((restored) => {
   if (restored) {
-    console.log('[OpenClaw Relay] Service worker restarted — state restored from session storage')
+    console.log('[Artífice Relay] Service worker restarted — state restored from session storage')
   }
 })
