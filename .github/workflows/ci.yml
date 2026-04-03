@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate manifest.json
+        run: |
+          python3 -c "
+          import json, sys
+          with open('manifest.json') as f:
+              m = json.load(f)
+          assert m['manifest_version'] == 3, 'Must be Manifest V3'
+          assert 'background' in m, 'Missing background service worker'
+          assert 'permissions' in m, 'Missing permissions'
+          print('✅ manifest.json valid')
+          "
+
+      - name: Check required files exist
+        run: |
+          for f in background.js options.html options.js manifest.json; do
+            test -f "$f" || { echo "❌ Missing: $f"; exit 1; }
+            echo "✅ $f"
+          done
+
+      - name: Check icons exist
+        run: |
+          for size in 16 32 48 128; do
+            test -f "icons/icon${size}.png" || { echo "❌ Missing: icons/icon${size}.png"; exit 1; }
+            echo "✅ icons/icon${size}.png"
+          done
+
+      - name: JS syntax check
+        run: |
+          node --check background.js
+          node --check options.js
+          echo "✅ No syntax errors"
+
+      - name: No hardcoded secrets
+        run: |
+          if grep -rn "sk-ant\|ghp_\|HRKU-\|token.*=.*['\"][a-zA-Z0-9]\{20,\}" --include="*.js" --include="*.json" .; then
+            echo "❌ Possible hardcoded secret found"
+            exit 1
+          fi
+          echo "✅ No secrets detected"
