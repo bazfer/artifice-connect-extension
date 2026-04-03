@@ -1,0 +1,2 @@
+Privacy Policy: https://artificeia.mx/privacy
+Full policy: https://github.com/bazfer/artifice-connect-extension/blob/master/privacy-policy.md
