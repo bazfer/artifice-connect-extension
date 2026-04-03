@@ -10,7 +10,7 @@
     "128": "icons/icon128.png"
   },
   "permissions": ["debugger", "tabs", "activeTab", "storage", "alarms"],
-  "host_permissions": ["http://127.0.0.1/*", "http://localhost/*"],
+  "host_permissions": ["http://127.0.0.1/*", "http://localhost/*", "wss://*/*", "https://*/*"],
   "background": { "service_worker": "background.js" },
   "action": {
     "default_title": "Artífice Connect (click to share/unshare tab)",

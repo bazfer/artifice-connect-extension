@@ -1,22 +1,9 @@
-const DEFAULT_PORT = 18792
+const DEFAULT_RELAY_URL = 'wss://relay.artificeia.mx'
 
-function clampPort(value) {
-  const n = Number.parseInt(String(value || ''), 10)
-  if (!Number.isFinite(n)) return DEFAULT_PORT
-  if (n <= 0 || n > 65535) return DEFAULT_PORT
-  return n
-}
-
-function updateRelayUrl(port) {
-  const el = document.getElementById('relay-url')
-  if (!el) return
-  el.textContent = `http://127.0.0.1:${port}/`
-}
-
-function relayHeaders(token) {
-  const t = String(token || '').trim()
-  if (!t) return {}
-  return { 'x-artifice-relay-token': t }
+function normalizeRelayUrl(value) {
+  const trimmed = String(value || '').trim()
+  if (!trimmed) return DEFAULT_RELAY_URL
+  return trimmed
 }
 
 function setStatus(kind, message) {
@@ -26,57 +13,64 @@ function setStatus(kind, message) {
   status.textContent = message || ''
 }
 
-async function checkRelayReachable(port, token) {
-  const url = `http://127.0.0.1:${port}/json/version`
+async function checkRelayReachable(relayUrl, token) {
   const trimmedToken = String(token || '').trim()
   if (!trimmedToken) {
-    setStatus('error', 'Gateway token required. Save your gateway token to connect.')
+    setStatus('error', 'Client token required. Save your token to connect.')
     return
   }
-  const ctrl = new AbortController()
-  const t = setTimeout(() => ctrl.abort(), 1200)
+
+  // Derive HTTPS URL from WSS URL for reachability check
+  let httpUrl
   try {
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: relayHeaders(trimmedToken),
+    const parsed = new URL(relayUrl)
+    parsed.protocol = parsed.protocol === 'wss:' ? 'https:' : 'http:'
+    parsed.pathname = '/'
+    httpUrl = parsed.toString()
+  } catch {
+    setStatus('error', `Invalid relay URL: ${relayUrl}`)
+    return
+  }
+
+  const ctrl = new AbortController()
+  const t = setTimeout(() => ctrl.abort(), 3000)
+  try {
+    const res = await fetch(httpUrl, {
+      method: 'HEAD',
       signal: ctrl.signal,
     })
     if (res.status === 401) {
-      setStatus('error', 'Gateway token rejected. Check token and save again.')
+      setStatus('error', 'Relay reachable but token was rejected. Check token and save again.')
       return
     }
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    setStatus('ok', `Relay reachable and authenticated at http://127.0.0.1:${port}/`)
+    // Any response (even 404) means the server is up
+    setStatus('ok', `Relay reachable at ${relayUrl}`)
   } catch {
-    setStatus(
-      'error',
-      `Relay not reachable/authenticated at http://127.0.0.1:${port}/. Start Artífice browser relay and verify token.`,
-    )
+    // Public relays may not respond to HTTP HEAD — that's OK
+    setStatus('', `Relay URL saved: ${relayUrl} (could not verify reachability)`)
   } finally {
     clearTimeout(t)
   }
 }
 
 async function load() {
-  const stored = await chrome.storage.local.get(['relayPort', 'gatewayToken'])
-  const port = clampPort(stored.relayPort)
+  const stored = await chrome.storage.local.get(['relayUrl', 'gatewayToken'])
+  const relayUrl = normalizeRelayUrl(stored.relayUrl)
   const token = String(stored.gatewayToken || '').trim()
-  document.getElementById('port').value = String(port)
+  document.getElementById('relay-url-input').value = relayUrl
   document.getElementById('token').value = token
-  updateRelayUrl(port)
-  await checkRelayReachable(port, token)
+  await checkRelayReachable(relayUrl, token)
 }
 
 async function save() {
-  const portInput = document.getElementById('port')
+  const relayUrlInput = document.getElementById('relay-url-input')
   const tokenInput = document.getElementById('token')
-  const port = clampPort(portInput.value)
+  const relayUrl = normalizeRelayUrl(relayUrlInput.value)
   const token = String(tokenInput.value || '').trim()
-  await chrome.storage.local.set({ relayPort: port, gatewayToken: token })
-  portInput.value = String(port)
+  await chrome.storage.local.set({ relayUrl, gatewayToken: token })
+  relayUrlInput.value = relayUrl
   tokenInput.value = token
-  updateRelayUrl(port)
-  await checkRelayReachable(port, token)
+  await checkRelayReachable(relayUrl, token)
 }
 
 document.getElementById('save').addEventListener('click', () => void save())
