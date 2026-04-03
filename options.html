@@ -3,11 +3,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>OpenClaw Browser Relay</title>
+    <title>Artífice Connect</title>
     <style>
       :root {
         color-scheme: light dark;
-        --accent: #ff5a36;
+        --accent: #c8962e;
         --panel: color-mix(in oklab, canvas 92%, canvasText 8%);
         --border: color-mix(in oklab, canvasText 18%, transparent);
         --muted: color-mix(in oklab, canvasText 70%, transparent);
@@ -158,8 +158,8 @@
           <img src="icons/icon128.png" alt="" />
         </div>
         <div>
-          <h1>OpenClaw Browser Relay</h1>
-          <p class="subtitle">Click the toolbar button on a tab to attach / detach.</p>
+          <h1>Artífice Connect</h1>
+          <p class="subtitle">Click the toolbar button on a tab to share / unshare with your AI agent.</p>
         </div>
       </header>
 
@@ -167,28 +167,28 @@
         <div class="card">
           <h2>Getting started</h2>
           <p>
-            If you see a red <code>!</code> badge on the extension icon, the relay server is not reachable.
-            Start OpenClaw’s browser relay on this machine (Gateway or node host), then click the toolbar button again.
+            If you see a red <code>!</code> badge on the extension icon, the connection to Artífice is not active.
+            Make sure the Artífice Connect app is running, then click the toolbar button again.
           </p>
           <p>
-            Full guide (install, remote Gateway, security): <a href="https://docs.openclaw.ai/tools/chrome-extension" target="_blank" rel="noreferrer">docs.openclaw.ai/tools/chrome-extension</a>
+            Need help? Contact your Artífice administrator.
           </p>
         </div>
 
         <div class="card">
-          <h2>Relay connection</h2>
+          <h2>Connection</h2>
           <label for="port">Port</label>
           <div class="row">
             <input id="port" inputmode="numeric" pattern="[0-9]*" />
           </div>
-          <label for="token" style="margin-top: 10px">Gateway token</label>
+          <label for="token" style="margin-top: 10px">Client token</label>
           <div class="row">
             <input id="token" type="password" autocomplete="off" style="width: min(520px, 100%)" />
             <button id="save" type="button">Save</button>
           </div>
           <div class="hint">
-            Default port: <code>18792</code>. Extension connects to: <code id="relay-url">http://127.0.0.1:&lt;port&gt;/</code>.
-            Gateway token must match <code>gateway.auth.token</code> (or <code>OPENCLAW_GATEWAY_TOKEN</code>).
+            Default port: <code>18792</code>. Connects to: <code id="relay-url">http://127.0.0.1:&lt;port&gt;/</code>.
+            Your client token is provided during pairing in the Artífice Connect app.
           </div>
           <div class="status" id="status"></div>
         </div>
