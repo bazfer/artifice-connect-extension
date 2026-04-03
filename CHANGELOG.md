@@ -1,17 +1,17 @@
 # Changelog
 
-## 0.1.0 (2026-02-15)
+## 1.0.0 (2026-04-03)
 
-Initial release — resilient fork of OpenClaw Browser Relay.
+First public release of Artífice Connect.
 
-### Added
-- Auto-reconnect with exponential backoff (1s → 30s cap) + jitter
+### Features
+- Connect your browser to your AI assistant via secure WSS relay
+- Tab-level sharing control (click to share/unshare)
+- Auto-reconnect with exponential backoff + jitter
 - State persistence via `chrome.storage.session` (survives MV3 worker restarts)
-- Keepalive alarm (4 min interval) to prevent worker termination
-- Tab lifecycle cleanup (`onRemoved`, `onReplaced`)
-- Per-tab error handling in state restore loop
+- Keepalive alarm to prevent service worker termination
+- Configurable relay URL (default: `wss://relay.artificeia.mx`)
+- Token-based authentication
 
-### Changed
-- WS disconnect no longer detaches debugger — keeps sessions alive
-- Permanent WS handlers installed inside `onopen` to close race window
-- `manifest.json`: added `alarms` permission
+### Based on
+Resilient fork of [OpenClaw Browser Relay](https://github.com/Unayung/openclaw-browser-relay) (MIT).
