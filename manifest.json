@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Artífice Connect",
-  "version": "0.1.0",
-  "description": "Connect your browser to Artífice — AI-driven automation for legacy web portals.",
+  "version": "1.0.0",
+  "description": "Connect your browser to your AI assistant. Let your agent see and interact with web pages on your behalf.",
+  "homepage_url": "https://artificeia.mx",
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",
@@ -10,7 +11,10 @@
     "128": "icons/icon128.png"
   },
   "permissions": ["debugger", "tabs", "activeTab", "storage", "alarms"],
-  "host_permissions": ["http://127.0.0.1/*", "http://localhost/*", "wss://*/*", "https://*/*"],
+  "host_permissions": [
+    "wss://relay.artificeia.mx/*",
+    "https://relay.artificeia.mx/*"
+  ],
   "background": { "service_worker": "background.js" },
   "action": {
     "default_title": "Artífice Connect (click to share/unshare tab)",
